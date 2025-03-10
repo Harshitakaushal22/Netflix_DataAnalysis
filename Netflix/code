@@ -1,0 +1,86 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+import zipfile
+
+# Path to the ZIP file
+zip_path = r"C:\Users\hardik\Downloads\netflix_titles.csv.zip"
+
+# Open ZIP and read CSV inside it
+with zipfile.ZipFile(zip_path, 'r') as z:
+    with z.open("netflix_titles.csv") as file:
+        df = pd.read_csv(file)
+# Verify df is loaded correctly
+if df is not None and not df.empty:
+    print("Dataset loaded successfully!")
+    print(df.head())
+
+    # Display first few rows
+print(df.head())
+# Check for missing values
+print(df.isnull().sum())
+
+# Check if 'rating' column exists
+if 'rating' in df.columns:
+    print(df.isnull().sum())  # Check missing values
+    
+    # Instead of inplace=True, use reassignment
+    df['rating'] = df['rating'].fillna('Unknown')
+
+    print("Missing values in 'rating' filled with 'Unknown'")
+else:
+    print("Error: 'rating' column not found in dataset!")
+    # Movies vs TV Shows Distribution
+plt.figure(figsize=(6,4))
+sns.countplot(data=df, x='type', palette='coolwarm')
+plt.title("Distribution of Movies and TV Shows on Netflix")
+plt.xlabel("Type")
+plt.ylabel("Count")
+plt.show()
+# Ensure 'release_year' is numeric
+df['release_year'] = pd.to_numeric(df['release_year'], errors='coerce')
+
+# Drop missing values in release_year
+df = df.dropna(subset=['release_year'])
+
+# Convert to integer (after handling NaN)
+df['release_year'] = df['release_year'].astype(int)
+
+# Plot distribution
+plt.figure(figsize=(10,5))
+sns.histplot(df['release_year'], bins=30, kde=True, color='blue')
+plt.title("Number of Netflix Titles Released Per Year")
+plt.xlabel("Release Year")
+plt.ylabel("Count")
+plt.show()
+# Import Counter from collections
+from collections import Counter
+
+# Ensure 'listed_in' column is a string and handle NaN values
+df['listed_in'] = df['listed_in'].fillna("").astype(str)
+
+# Split genres and count occurrences
+genres = ','.join(df['listed_in']).split(',')  # Join all genres and split by comma
+genre_counts = Counter([genre.strip() for genre in genres])  # Strip spaces and count
+
+# Convert to DataFrame & Get Top 10 Genres
+top_genres = pd.DataFrame(genre_counts.items(), columns=['Genre', 'Count'])
+top_genres = top_genres.sort_values(by='Count', ascending=False).head(10)
+
+# Plot Top 10 Genres
+plt.figure(figsize=(12,6))
+sns.barplot(data=top_genres, x='Count', y='Genre', palette='viridis')
+plt.title("Top 10 Most Common Netflix Genres")
+plt.xlabel("Count")
+plt.ylabel("Genre")
+plt.show()
+# Count number of titles per country
+country_counts = df['country'].value_counts().head(10)
+
+plt.figure(figsize=(12,6))
+sns.barplot(x=country_counts.values, y=country_counts.index, palette='magma')
+plt.title("Top 10 Countries with Most Netflix Titles")
+plt.xlabel("Number of Titles")
+plt.ylabel("Country")
+plt.show()
